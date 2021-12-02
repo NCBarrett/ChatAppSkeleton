@@ -5,15 +5,16 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31 //30
     defaultConfig {
         applicationId "com.example.bitamirshafiee.chatappskeleton"
-        minSdkVersion 16
-        targetSdkVersion 30
+        minSdkVersion 19
+        targetSdkVersion 31 //30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -21,7 +22,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
@@ -39,29 +39,31 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
 
+    implementation (platform('com.google.firebase:firebase-bom:29.0.1')) //28.4.1
+
     implementation 'com.google.firebase:firebase-core:20.0.0' //16.0.7
 
-    implementation 'com.google.firebase:firebase-auth.21.0.1' //16.1.0
-//    implementation (platform('com.google.firebase:firebase-bom:28.4.1'))
-//
-////    implementation 'com.firebaseui:firebase-ui-database:0.4.0' // 8.0.0
-//    implementation 'com.firebaseui:firebase-ui-database:8.0.0'
-//
-//    //required to avoid "default_web_client_id unresolved" error
-//    implementation 'com.firebaseui:firebase-ui-auth:8.0.0' // or 7.2.0
-//
-//    implementation 'com.firebaseui:firebase-ui-firestore:8.0.0' // 8.0.0
-//    implementation 'com.firebaseui:firebase-ui-storage:5.0.0'
-//
-//    implementation 'com.google.firebase:firebase-auth:21.0.1'
-//    implementation 'com.google.firebase:firebase-database:20.0.2'
-//    implementation 'com.google.android.gms:play-services-auth:19.2.0'
-//
-//    implementation 'com.google.firebase:firebase-analytics-ktx:20.0.0' //19.0.1
-//    implementation 'com.google.firebase:firebase-database-ktx:20.0.2'
-//    implementation 'com.google.firebase:firebase-storage-ktx:20.0.0' //20.0.0
-//    implementation 'com.google.firebase:firebase-auth-ktx:21.0.1' //21.0.1
-//    implementation 'com.google.firebase:firebase-firestore-ktx:24.0.0' //23.0.3
+    implementation 'com.google.firebase:firebase-analytics-ktx' //19.0.1; 20.0.0
+
+    implementation 'com.google.firebase:firebase-auth:21.0.1' //21.0.1
+
+    implementation 'com.google.android.gms:play-services-auth:19.2.0'
+
+    implementation 'com.google.firebase:firebase-database:20.0.3' //20.0.2
+    implementation 'com.google.firebase:firebase-storage:20.0.0'
+    implementation 'com.firebaseui:firebase-ui-database:8.0.0' //0.4.0
+
+//    implementation 'com.firebaseui:firebase-ui-storage:20.0.0'    //5.0.0
+    implementation 'com.firebaseui:firebase-ui-auth:8.0.0' // or 7.2.0; required to avoid "default_web_client_id unresolved" error
+
+    implementation 'com.firebaseui:firebase-ui-firestore:8.0.0' // 8.0.0
+
+    implementation 'com.google.firebase:firebase-auth:21.0.1'
+
+    implementation 'com.google.firebase:firebase-database-ktx:20.0.3'
+    implementation 'com.google.firebase:firebase-storage-ktx:20.0.0' //20.0.0
+    implementation 'com.google.firebase:firebase-auth-ktx:21.0.1' //21.0.1
+    implementation 'com.google.firebase:firebase-firestore-ktx:24.0.0' //23.0.3
 
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
