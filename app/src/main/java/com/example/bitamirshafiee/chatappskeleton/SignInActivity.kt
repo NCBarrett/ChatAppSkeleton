@@ -1,13 +1,27 @@
 package com.example.bitamirshafiee.chatappskeleton
 
+import android.app.Activity
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.bitamirshafiee.chatappskeleton.databinding.ActivitySignInBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 
 class SignInActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "SignInActivity"
+    }
+
+    lateinit var binding : ActivitySignInBinding
 
     private var googleSignInClient : GoogleSignInClient? = null
     private var fireBaseAuth : FirebaseAuth? = null
@@ -15,6 +29,10 @@ class SignInActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_in)
+
+        binding = ActivitySignInBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         fireBaseAuth = FirebaseAuth.getInstance()
 
@@ -24,6 +42,34 @@ class SignInActivity : AppCompatActivity() {
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this@SignInActivity, gso)
-        
+
+        binding.signInButton.setOnClickListener() {
+            signIn()
+        }
+    }
+
+    private fun signIn() {
+        val signInIntent = googleSignInClient!!.signInIntent
+
+        val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data : Intent? = result.data
+                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+
+                try {
+                    val account = task.getResult(ApiException::class.java)
+                    fireBaseAuthWithGoogle(account!!)
+                } catch (e: ApiException) {
+                    Log.e(TAG, "Google sign in failed", e)
+                    Toast.makeText(this, "Google sign in failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        resultLauncher.launch(intent)
+    }
+
+    private fun fireBaseAuthWithGoogle(account: GoogleSignInAccount) {
+
     }
 }
