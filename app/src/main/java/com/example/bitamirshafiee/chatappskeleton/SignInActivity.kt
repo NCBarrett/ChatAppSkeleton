@@ -82,6 +82,7 @@ class SignInActivity : AppCompatActivity() {
                         startActivity(Intent(this@SignInActivity, MainActivity::class.java))
                         finish()
                     } else {
+                        Log.e(TAG, "Authentication failed ${task.exception}")
                         Toast.makeText(
                             this@SignInActivity,
                             "Authentication failed",

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ChatAppSkeleton</string>
+    <string name="app_name">ChatApp</string>
     <string name="add_image_description_string">add an image message</string>
     <string name="message_hint_string">message</string>
     <string name="send_button_string">send</string>
