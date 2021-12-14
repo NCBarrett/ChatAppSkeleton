@@ -8,6 +8,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AndroidStudio/ChatAppSkeleton/app/src/main/res/drawable/ic_account_circle_black_36dp.xml" value="0.262037037037037" />
         <entry key="..\:/AndroidStudio/ChatAppSkeleton/app/src/main/res/layout/activity_main.xml" value="0.12183383991894631" />
         <entry key="..\:/AndroidStudio/ChatAppSkeleton/app/src/main/res/layout/activity_sign_in.xml" value="0.17" />
         <entry key="..\:/AndroidStudio/ChatAppSkeleton/app/src/main/res/layout/item_message.xml" value="0.13" />

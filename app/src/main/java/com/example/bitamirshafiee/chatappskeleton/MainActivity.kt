@@ -1,28 +1,40 @@
 package com.example.bitamirshafiee.chatappskeleton
 
 import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.firebase.ui.database.FirebaseRecyclerAdapter
+import com.firebase.ui.database.FirebaseRecyclerOptions
+import com.firebase.ui.database.SnapshotParser
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 //import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import de.hdodenhof.circleimageview.CircleImageView
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "MainActivity"
         const val ANONYMOUS = "anonymous"
+        const val MESSAGE_CHILD = "messages"
     }
 
     private var userName : String? = null
@@ -33,12 +45,19 @@ class MainActivity : AppCompatActivity() {
 
 //    private var googleApiClient : GoogleApiClient? = null
 
+    lateinit var linearLayoutManager : LinearLayoutManager
+
     private var firebaseDatabaseReference : DatabaseReference? = null
     private var firebaseAdapter : FirebaseRecyclerAdapter<Message, MessageViewHolder>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        linearLayoutManager = LinearLayoutManager(this@MainActivity)
+        linearLayoutManager.stackFromEnd = true
+
+        firebaseDatabaseReference = FirebaseDatabase.getInstance().reference
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
@@ -51,15 +70,67 @@ class MainActivity : AppCompatActivity() {
         fireBaseUser = fireBaseAuth!!.currentUser
 
         if (fireBaseUser == null) {
+            Log.d(TAG, "USER IS NULL: $fireBaseUser")
+
             startActivity(Intent (this@MainActivity, SignInActivity::class.java))
             finish()
+            return
         } else {
             userName = fireBaseUser!!.displayName
 
             if (fireBaseUser!!.photoUrl != null) {
                 userPhotoUrl = fireBaseUser!!.photoUrl!!.toString()
             }
+            Log.d(TAG, "USER IS NOT NULL")
         }
+
+        val parser = SnapshotParser<Message>{
+            snapshot: DataSnapshot ->
+
+            val chatMessage = snapshot.getValue(Message::class.java)
+
+            if (chatMessage != null) {
+                chatMessage.id = snapshot.key
+            }
+            chatMessage!!
+        }
+
+        val messageRefs = firebaseDatabaseReference!!.child(MESSAGE_CHILD)
+
+        val options = FirebaseRecyclerOptions.Builder<Message>()
+            .setQuery(messageRefs, parser)
+            .build()
+
+        firebaseAdapter = object : FirebaseRecyclerAdapter<Message, MessageViewHolder>(options) {
+            override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): MessageViewHolder {
+                val inflater = LayoutInflater.from(viewGroup.context)
+
+                return MessageViewHolder(inflater.inflate(R.layout.item_message, viewGroup, false))
+            }
+
+            override fun onBindViewHolder(holder: MessageViewHolder, position: Int, model: Message) {
+
+                progress_bar.visibility = ProgressBar.INVISIBLE
+
+                holder.bind(model)
+            }
+        }
+
+        firebaseAdapter!!.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+                val messageCount = firebaseAdapter!!.itemCount
+                val lastVisiblePosition = linearLayoutManager.findLastCompletelyVisibleItemPosition()
+
+                // if(A || A && B) -> if(A || (A && B))
+                if (lastVisiblePosition == -1 || positionStart >= messageCount -1 && lastVisiblePosition == positionStart - 1){
+                    recycler_view!!.scrollToPosition(positionStart)
+                }
+            }
+        })
+
+        recycler_view.layoutManager = linearLayoutManager
+        recycler_view.adapter = firebaseAdapter
     }
 
     class MessageViewHolder(v: View) : RecyclerView.ViewHolder(v) {
@@ -86,7 +157,9 @@ class MainActivity : AppCompatActivity() {
                 messageTextView.visibility = View.VISIBLE
 
                 messageImageView.visibility = View.GONE
+
             } else if (message.imageUrl != null) {
+
                 messageTextView.visibility = View.GONE
                 messageImageView.visibility = View.VISIBLE
 
@@ -102,13 +175,36 @@ class MainActivity : AppCompatActivity() {
                             Glide.with(messageImageView.context)
                                 .load(downloadUrl)
                                 .into(messageImageView)
-
                         } else {
                             Log.e(TAG, "Getting Download url was not successful ${task.exception}")
                         }
                     }
+                } else {
+                    Glide.with(messageImageView.context)
+                        .load(Uri.parse(message.imageUrl))
+                        .into(messageImageView)
                 }
             }
+
+            nameTextView.text = message.name
+
+            if (message.photoUrl == null) {
+                userImage.setImageDrawable(ContextCompat.getDrawable(userImage.context, R.drawable.ic_account_circle_black_36dp))
+            } else {
+                Glide.with(userImage.context)
+                    .load(Uri.parse(message.photoUrl))
+                    .into(userImage)
+            }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        firebaseAdapter!!.stopListening()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        firebaseAdapter!!.startListening()
     }
 }
