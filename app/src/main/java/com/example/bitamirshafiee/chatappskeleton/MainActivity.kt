@@ -143,9 +143,9 @@ class MainActivity : AppCompatActivity() {
 
         init {
             messageTextView = itemView.findViewById(R.id.message_text_view)
-            messageImageView = itemView.findViewById(R.id.messenger_image_view)
+            messageImageView = itemView.findViewById(R.id.message_image_view)
             nameTextView = itemView.findViewById(R.id.name_text_view)
-            userImage = itemView.findViewById(R.id.message_image_view)
+            userImage = itemView.findViewById(R.id.messenger_image_view)
         }
 
         fun bind(message: Message) {
