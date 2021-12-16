@@ -1,5 +1,6 @@
 package com.example.bitamirshafiee.chatappskeleton
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +12,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -109,7 +112,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onBindViewHolder(holder: MessageViewHolder, position: Int, model: Message) {
-
                 progress_bar.visibility = ProgressBar.INVISIBLE
 
                 holder.bind(model)
@@ -131,6 +133,33 @@ class MainActivity : AppCompatActivity() {
 
         recycler_view.layoutManager = linearLayoutManager
         recycler_view.adapter = firebaseAdapter
+
+        send_button.setOnClickListener {
+
+            val message = Message(text_message_edit_text!!.text.toString(), userName!!, userPhotoUrl, null)
+            firebaseDatabaseReference!!.child(MESSAGE_CHILD).push().setValue(message)
+
+            text_message_edit_text!!.setText("")
+        }
+
+        add_image_image_view.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+
+            intent.type = "image/*"
+
+            val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                result ->
+
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val data : Intent? = result.data
+
+                    if (result.data != null) {
+                        val uri = data?.data
+                    }
+                }
+            }
+        }
     }
 
     class MessageViewHolder(v: View) : RecyclerView.ViewHolder(v) {
