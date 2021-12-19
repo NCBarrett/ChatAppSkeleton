@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -54,6 +55,33 @@ class MainActivity : AppCompatActivity() {
 
     private var firebaseDatabaseReference : DatabaseReference? = null
     private var firebaseAdapter : FirebaseRecyclerAdapter<Message, MessageViewHolder>? = null
+
+    val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+
+            if (result.data != null) {
+                val uri = data?.data
+
+                val tempMessage = Message(null, userName, userPhotoUrl, LOADING_IMAGE_URL)
+                firebaseDatabaseReference!!.child(MESSAGE_CHILD).push().setValue(tempMessage){
+                        databaseError, databaseReference ->
+                    if (databaseError == null) {
+                        val key = databaseReference.key
+                        val storageReference = FirebaseStorage.getInstance()
+                            .getReference(fireBaseUser!!.uid)
+                            .child(key!!)
+                            .child(uri?.lastPathSegment!!)
+
+                        putImageInStorage(storageReference, uri, key)
+                    } else {
+                        Log.e(TAG, "Unable to write message to database ${databaseError.toException()}")
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,33 +177,6 @@ class MainActivity : AppCompatActivity() {
             intent.addCategory(Intent.CATEGORY_OPENABLE)
 
             intent.type = "image/*"
-
-            val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val data: Intent? = result.data
-
-                    if (result.data != null) {
-                        val uri = data?.data
-
-                        val tempMessage = Message(null, userName, userPhotoUrl, LOADING_IMAGE_URL)
-                        firebaseDatabaseReference!!.child(MESSAGE_CHILD).push().setValue(tempMessage){
-                            databaseError, databaseReference ->
-                            if (databaseError == null) {
-                                val key = databaseReference.key
-                                val storageReference = FirebaseStorage.getInstance()
-                                    .getReference(fireBaseUser!!.uid)
-                                    .child(key!!)
-                                    .child(uri?.lastPathSegment!!)
-
-                                putImageInStorage(storageReference, uri, key)
-                            } else {
-                                Log.e(TAG, "Unable to write message to database ${databaseError.toException()}")
-                            }
-                        }
-                    }
-                }
-            }
             resultLauncher.launch(intent)
         }
     }
@@ -272,5 +273,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         firebaseAdapter!!.startListening()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        return super.onCreateOptionsMenu(menu)
     }
 }
