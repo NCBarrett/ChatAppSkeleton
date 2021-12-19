@@ -29,6 +29,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -38,6 +39,7 @@ class MainActivity : AppCompatActivity() {
         const val TAG = "MainActivity"
         const val ANONYMOUS = "anonymous"
         const val MESSAGE_CHILD = "messages"
+        const val LOADING_IMAGE_URL = "https://flevix.com/wp-content/uploads/2019/07/Ring-Loading-feature.gif"
     }
 
     private var userName : String? = null
@@ -148,16 +150,51 @@ class MainActivity : AppCompatActivity() {
 
             intent.type = "image/*"
 
-            val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                result ->
+            val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
 
                 if (result.resultCode == Activity.RESULT_OK) {
-                    val data : Intent? = result.data
+                    val data: Intent? = result.data
 
                     if (result.data != null) {
                         val uri = data?.data
+
+                        val tempMessage = Message(null, userName, userPhotoUrl, LOADING_IMAGE_URL)
+                        firebaseDatabaseReference!!.child(MESSAGE_CHILD).push().setValue(tempMessage){
+                            databaseError, databaseReference ->
+                            if (databaseError == null) {
+                                val key = databaseReference.key
+                                val storageReference = FirebaseStorage.getInstance()
+                                    .getReference(fireBaseUser!!.uid)
+                                    .child(key!!)
+                                    .child(uri?.lastPathSegment!!)
+
+                                putImageInStorage(storageReference, uri, key)
+                            } else {
+                                Log.e(TAG, "Unable to write message to database ${databaseError.toException()}")
+                            }
+                        }
                     }
                 }
+            }
+            resultLauncher.launch(intent)
+        }
+    }
+
+    private fun putImageInStorage(storageReference: StorageReference, uri: Uri?, key: String?) {
+        val uploadTask = storageReference.putFile(uri!!)
+        uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful){
+                throw task.exception!!
+            }
+            storageReference.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val downloadUrl = task.result!!.toString()
+                val message = Message(null, userName, userPhotoUrl, downloadUrl)
+
+                firebaseDatabaseReference!!.child(MESSAGE_CHILD).child(key!!).setValue(message)
+            } else {
+                Log.e(TAG, "Image upload task was not successful ${task.exception}")
             }
         }
     }
