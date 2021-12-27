@@ -1,20 +1,17 @@
 package com.example.bitamirshafiee.chatappskeleton
 
+//import com.google.android.gms.common.api.GoogleApiClient
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,8 +19,9 @@ import com.bumptech.glide.Glide
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.firebase.ui.database.SnapshotParser
+import com.google.android.gms.auth.api.signin.GoogleSignIn.*
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-//import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -83,6 +81,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var googleSignInClient : GoogleSignInClient? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -96,6 +96,8 @@ class MainActivity : AppCompatActivity() {
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
+
+        googleSignInClient = getClient(this@MainActivity, gso)
 
         userName = ANONYMOUS
 
@@ -222,7 +224,6 @@ class MainActivity : AppCompatActivity() {
                 messageTextView.text = message.text
 
                 messageTextView.visibility = View.VISIBLE
-
                 messageImageView.visibility = View.GONE
 
             } else if (message.imageUrl != null) {
@@ -265,6 +266,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.sign_out_item -> {
+                fireBaseAuth!!.signOut()
+                fireBaseAuth = null
+                userName = ANONYMOUS
+                userPhotoUrl = null
+
+                googleSignInClient!!.revokeAccess().addOnCompleteListener(this@MainActivity){
+                    startActivity(Intent(this@MainActivity, SignInActivity::class.java))
+                    finish()
+                }
+                return true
+            }
+            else -> return super.onOptionsItemSelected(item)
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         firebaseAdapter!!.stopListening()
@@ -276,6 +295,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        return super.onCreateOptionsMenu(menu)
+        val inflater = menuInflater
+        inflater.inflate(R.menu.overflow_menu, menu)
+        return true
     }
 }
